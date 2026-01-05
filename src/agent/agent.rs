@@ -453,12 +453,13 @@ impl Agent {
     async fn execute_tool(&mut self, name: &str, arguments: &Value) -> Result<String, Error> {
         // Special handling for Task tool
         if name == "task" {
-            let args_str = if arguments.is_null() {
-                None
+            // Format a concise description for Task tool
+            let display_args = if let Some(desc) = arguments.get("description").and_then(|v| v.as_str()) {
+                Some(format!("\"{}\"", desc))
             } else {
-                Some(serde_json::to_string_pretty(arguments).unwrap_or_default())
+                None
             };
-            UI::tool_start(name, args_str.as_deref());
+            UI::tool_start("Task", display_args.as_deref());
 
             // Parse arguments
             let subagent_type_str = arguments
@@ -562,13 +563,16 @@ impl Agent {
         // Regular tool execution
         for tool in &self.tools {
             if tool.definition().function.name == name {
-                // 显示工具开始执行的消息
-                let args_str = if arguments.is_null() {
-                    None
-                } else {
+                // Format display args - special handling for todo_write
+                let display_args = if name == "todo_write" {
+                    // For todo_write, show a clean header instead of JSON
+                    Some("updated".to_string())
+                } else if !arguments.is_null() {
                     Some(serde_json::to_string_pretty(arguments).unwrap_or_default())
+                } else {
+                    None
                 };
-                UI::tool_start(name, args_str.as_deref());
+                UI::tool_start(name, display_args.as_deref());
 
                 // 执行工具
                 let result = match tool.execute(arguments).await {
@@ -580,8 +584,16 @@ impl Agent {
                     }
                 };
 
-                // 显示工具执行结果
-                UI::tool_content(&result);
+                // 显示工具执行结果 - special handling for todo_write
+                if name == "todo_write" {
+                    // For todo_write, display with proper line breaks
+                    println!();
+                    for line in result.lines() {
+                        println!("{}", line);
+                    }
+                } else {
+                    UI::tool_content(&result);
+                }
                 UI::tool_end();
 
                 return Ok(result);
