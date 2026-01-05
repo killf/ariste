@@ -1,5 +1,5 @@
-use base64::Engine;
 use base64::engine::general_purpose::STANDARD as base64;
+use base64::Engine;
 use bytes::Bytes;
 
 use crate::error::Error;

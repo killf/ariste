@@ -36,8 +36,8 @@ async fn main() -> Result<(), Error> {
     println!("工作目录: {}", agent.workdir.display());
 
     let mut rl: Editor<AgentHinter, DefaultHistory> = Editor::new()?;
-    if rl.load_history(".ariste/history.txt").is_err() {
-        println!("No previous history.");
+    if let Err(e) = rl.load_history(".ariste/history.txt") {
+        println!("{}", e);
     }
     rl.set_helper(Some(AgentHinter::new()));
 
