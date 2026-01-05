@@ -11,11 +11,11 @@ pub(crate) struct Agent {
 
 impl Agent {
     pub async fn load_from_config(workdir: PathBuf) -> Result<Self, Error> {
-        let config_file = ".ariste/config.json";
+        let config_file = ".ariste/settings.json";
         let config = if !tokio::fs::try_exists(&config_file).await? {
             AgentConfig::default()
         } else {
-            let buf = tokio::fs::read(".ariste/config.json").await?;
+            let buf = tokio::fs::read(&config_file).await?;
             serde_json::from_slice(&buf)?
         };
 

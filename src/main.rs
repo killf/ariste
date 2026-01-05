@@ -31,13 +31,19 @@ async fn main() -> Result<(), Error> {
         tokio::fs::create_dir_all(&workdir).await?;
     }
 
+    let ariste_folder: PathBuf = ".ariste".into();
+    if !ariste_folder.exists() {
+        tokio::fs::create_dir_all(&ariste_folder).await?;
+    }
+
     // 2. 创建Agent
     let mut agent = Agent::load_from_config(workdir.clone()).await?;
     println!("工作目录: {}", agent.workdir.display());
 
     let mut rl: Editor<AgentHinter, DefaultHistory> = Editor::new()?;
-    if let Err(e) = rl.load_history(".ariste/history.txt") {
-        println!("{}", e);
+    let history_file = ariste_folder.join("history.txt");
+    if history_file.exists() {
+        rl.load_history(&history_file)?;
     }
     rl.set_helper(Some(AgentHinter::new()));
 
@@ -75,7 +81,7 @@ async fn main() -> Result<(), Error> {
     }
 
     // 4. 保存历史信息
-    rl.save_history(".ariste/history.txt")?;
+    rl.save_history(&history_file)?;
 
     Ok(())
 }

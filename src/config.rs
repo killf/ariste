@@ -8,6 +8,7 @@ pub struct AgentConfig {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct OllamaConfig {
     pub base: Option<String>,
+    pub model: Option<String>,
 }
 
 impl Default for AgentConfig {
@@ -15,6 +16,7 @@ impl Default for AgentConfig {
         Self {
             ollama: Some(OllamaConfig {
                 base: Some("http://127.0.0.1:11434".to_string()),
+                model: Some("qwen3".to_string()),
             }),
         }
     }
