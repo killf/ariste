@@ -7,6 +7,7 @@ mod grep;
 mod edit;
 mod web_fetch;
 mod todo_write;
+mod task;
 
 pub use types::{Tool, ToolDefinition};
 pub use bash::BashTool;
@@ -17,3 +18,4 @@ pub use grep::GrepTool;
 pub use edit::EditTool;
 pub use web_fetch::WebFetchTool;
 pub use todo_write::TodoWriteTool;
+pub use task::TaskTool;
