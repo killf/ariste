@@ -8,8 +8,7 @@ use serde_json::json;
 use std::io::{stdout, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
+use tokio::time::{sleep, Duration};
 
 #[derive(Debug)]
 pub struct Ollama {
@@ -102,12 +101,12 @@ impl Ollama {
         let spinner_running = Arc::new(AtomicBool::new(true));
         let spinner_running_clone = spinner_running.clone();
 
-        // 在后台线程中运行 spinner
-        thread::spawn(move || {
+        // 在异步任务中运行 spinner
+        tokio::spawn(async move {
             let mut ui = UI::new();
             while spinner_running_clone.load(Ordering::Relaxed) {
                 ui.thinking_start();
-                thread::sleep(Duration::from_millis(150));
+                sleep(Duration::from_millis(150)).await;
             }
         });
 
@@ -131,7 +130,7 @@ impl Ollama {
                             if status == 0 {
                                 // 停止 spinner 并清除行
                                 spinner_running.store(false, Ordering::Relaxed);
-                                thread::sleep(Duration::from_millis(50));
+                                sleep(Duration::from_millis(50)).await;
                                 UI::clear_line();
 
                                 // 显示思考块开始
@@ -161,7 +160,7 @@ impl Ollama {
                             if status == 0 {
                                 // 还没有看到 thinking，直接停止 spinner
                                 spinner_running.store(false, Ordering::Relaxed);
-                                thread::sleep(Duration::from_millis(50));
+                                sleep(Duration::from_millis(50)).await;
                                 UI::clear_line();
                                 UI::response_start();
                             } else if status == 1 {

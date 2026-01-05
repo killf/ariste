@@ -187,10 +187,9 @@ impl UI {
         println!(
             "{}",
             format!(
-                "{} {} {}",
+                "{} {}",
                 THINKING_CORNER_TL.dimmed(),
-                "Thinking".dimmed().italic(),
-                THINKING_CORNER_TR.dimmed()
+                "Thinking".dimmed().italic()
             )
         );
     }
@@ -211,7 +210,7 @@ impl UI {
     pub fn thinking_block_end() {
         println!(
             "{}",
-            format!("{}{}", THINKING_CORNER_BL.dimmed(), THINKING_CORNER_BR.dimmed())
+            format!("{}", THINKING_CORNER_BL.dimmed())
         );
         println!();
     }
