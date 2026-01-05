@@ -62,30 +62,21 @@ impl UI {
     /// 打印欢迎信息 - Claude Code 风格
     pub fn welcome(workdir: &std::path::Path) {
         println!();
-        println!(
-            "{} {}",
-            "✦".bright_yellow(),
-            "Welcome to".dimmed()
-        );
+        println!("{} {}", "✦".bright_yellow(), "Welcome to".dimmed());
         println!(
             "{}",
             "  ╔════════════════════════════════════════╗".bright_yellow()
         );
-        println!(
-            "{}",
-            "  ║".bright_yellow()
-        );
+        println!("{}", "  ║".bright_yellow());
         println!(
             "{}",
             format!(
-                "  ║  {}  ",
+                "  {}  {}  ",
+                "║".bright_yellow(),
                 "Ariste AI Agent".bright_cyan().bold()
             )
         );
-        println!(
-            "{}",
-            "  ║".bright_yellow()
-        );
+        println!("{}", "  ║".bright_yellow());
         println!(
             "{}",
             "  ╚════════════════════════════════════════╝".bright_yellow()
@@ -102,10 +93,7 @@ impl UI {
 
     /// 打印可用命令
     fn print_available_commands() {
-        println!(
-            "{}",
-            "Available commands:".dimmed()
-        );
+        println!("{}", "Available commands:".dimmed());
         println!(
             "  {}{}  {}",
             "/".bright_green(),
@@ -177,19 +165,14 @@ impl UI {
 
     /// 显示响应开始
     pub fn response_start() {
-        Self::clear_line();
-        println!();
     }
 
     /// 显示响应结束
     pub fn response_end() {
-        println!();
     }
 
     /// 显示思考块开始 - Claude Code 风格
     pub fn thinking_block_start() {
-        Self::clear_line();
-        println!();
         println!(
             "{}",
             format!(
@@ -204,94 +187,94 @@ impl UI {
     pub fn thinking_block_content(content: &str) {
         // 确保内容正确缩进
         for line in content.lines() {
-            println!(
-                "{} {}",
-                THINKING_BORDER.dimmed(),
-                line.dimmed().italic()
-            );
+            println!("{} {}", THINKING_BORDER.dimmed(), line.dimmed().italic());
         }
     }
 
     /// 显示思考块结束
     pub fn thinking_block_end() {
-        println!(
-            "{}",
-            format!("{}", THINKING_CORNER_BL.dimmed())
-        );
-        println!();
+        println!("{}", format!("{}", THINKING_CORNER_BL.dimmed()));
     }
 
     /// 显示工具调用开始 - Claude Code 风格
     pub fn tool_start(tool_name: &str, args: Option<&str>) {
         println!();
-        println!(
-            "{} {}",
-            "▶".bright_magenta(),
-            format!("{} {}", tool_name.bright_magenta(), args.unwrap_or(""))
-                .bright_magenta()
-        );
+        // 格式化参数，使其更紧凑
+        let formatted_args = if let Some(args_str) = args {
+            // 移除换行和多余空格，使 JSON 更紧凑
+            let compact = args_str
+                .lines()
+                .map(|line| line.trim())
+                .collect::<Vec<_>>()
+                .join(" ");
+            Some(compact)
+        } else {
+            None
+        };
+
+        match formatted_args {
+            Some(args) if !args.is_empty() && args != "null" => {
+                print!(
+                    "{} {} {}",
+                    "🔨".bright_magenta(),
+                    tool_name.bright_magenta(),
+                    args.dimmed()
+                );
+            }
+            _ => {
+                print!(
+                    "{} {}",
+                    "🔨".bright_magenta(),
+                    tool_name.bright_magenta()
+                );
+            }
+        }
+        stdout().flush().ok();
     }
 
     /// 显示工具调用内容
     pub fn tool_content(content: &str) {
-        // 缩进显示工具内容
-        for line in content.lines() {
-            println!("  {}", line.dimmed());
+        // 在同一行显示结果
+        let trimmed = content
+            .lines()
+            .map(|l| l.trim())
+            .collect::<Vec<_>>()
+            .join(" ");
+        if !trimmed.is_empty() {
+            println!(" {} {}", "=".bright_black(), trimmed.bright_green());
+        } else {
+            println!();
         }
     }
 
     /// 显示工具调用结束
     pub fn tool_end() {
-        println!(
-            "{} {}",
-            "◀".dimmed(),
-            "Done".dimmed()
-        );
+        // 不需要额外显示，结果已在 tool_content 中显示
     }
 
     /// 显示工具调用错误
     pub fn tool_error(error: &str) {
-        println!(
-            "{} {}",
-            "✖".bright_red(),
-            error.bright_red()
-        );
+        println!("{} {}", "✖".bright_red(), error.bright_red());
     }
 
     /// 打印错误信息 - Claude Code 风格
     pub fn error(msg: &str) {
-        println!(
-            "\n{} {}",
-            "✖".bright_red(),
-            msg.bright_red()
-        );
+        println!("\n{} {}", "✖".bright_red(), msg.bright_red());
     }
 
     /// 打印信息提示
     pub fn info(msg: &str) {
-        println!(
-            "{} {}",
-            "ℹ".bright_blue(),
-            msg.bright_blue()
-        );
+        println!("{} {}", "ℹ".bright_blue(), msg.bright_blue());
     }
 
     /// 打印成功信息
     pub fn success(msg: &str) {
-        println!(
-            "{} {}",
-            "✓".bright_green(),
-            msg.bright_green()
-        );
+        println!("{} {}", "✓".bright_green(), msg.bright_green());
     }
 
     /// 打印警告信息
     pub fn warning(msg: &str) {
-        println!(
-            "{} {}",
-            "⚠".bright_yellow(),
-            msg.bright_yellow()
-        );
+        println!("{} {}", "⚠".bright_yellow(), msg.bright_yellow());
     }
 
     /// 清除屏幕
@@ -307,13 +290,7 @@ impl UI {
 
     /// 显示退出信息
     pub fn goodbye() {
-        println!();
-        println!(
-            "{} {}",
-            "✦".bright_yellow(),
-            "Goodbye!".bright_yellow()
-        );
-        println!();
+        println!("{} {}", "✦".bright_yellow(), "Goodbye!".bright_yellow());
     }
 }
 

@@ -2,7 +2,7 @@ use crate::agent::message::Message;
 use crate::config::AgentConfig;
 use crate::error::Error;
 use crate::llm::Ollama;
-use crate::tools::{Tool, ToolDefinition, CalculatorTool};
+use crate::tools::{CalculatorTool, Tool, ToolDefinition};
 use crate::ui::UI;
 use serde_json::Value;
 use std::path::PathBuf;
@@ -26,9 +26,7 @@ impl Agent {
             serde_json::from_slice(&buf)?
         };
 
-        let url = if let Some(ollama) = &config.ollama
-            && let Some(base) = ollama.base.as_deref()
-        {
+        let url = if let Some(base) = &config.base {
             format!("{}/api/chat", base)
         } else {
             "http://localhost:11434/api/chat".to_string()
@@ -56,7 +54,7 @@ impl Agent {
         })
     }
 
-    pub async fn invoke(&mut self, prompt: &str) -> Result<String, Error> {
+    pub async fn invoke(&mut self, prompt: &str) -> Result<(), Error> {
         // 添加用户消息到历史
         self.messages.push(Message {
             role: "user".to_string(),
@@ -76,7 +74,11 @@ impl Agent {
             }
 
             // 使用完整的消息历史调用 Ollama
-            let ollama_response = self.ollama.execute_with_messages("qwen3-vl:32b", &self.messages).await?;
+            let model = self.config.model.as_deref().unwrap_or("qwen3-vl:32b");
+            let ollama_response = self
+                .ollama
+                .execute_with_messages(model, &self.messages)
+                .await?;
 
             // 检查是否有 tool calls
             if let Some(tool_calls) = ollama_response.tool_calls {
@@ -91,12 +93,18 @@ impl Agent {
                 // 执行每个工具调用
                 for tool_call in &tool_calls {
                     if let Some(function) = tool_call.get("function") {
-                        let name = function.get("name").and_then(|v: &Value| v.as_str()).unwrap_or("");
+                        let name = function
+                            .get("name")
+                            .and_then(|v: &Value| v.as_str())
+                            .unwrap_or("");
                         let default_args = serde_json::json!({});
                         let arguments = function.get("arguments").unwrap_or(&default_args);
 
                         // 获取 tool_call_id
-                        let tool_call_id = tool_call.get("id").and_then(|v: &Value| v.as_str()).unwrap_or("");
+                        let tool_call_id = tool_call
+                            .get("id")
+                            .and_then(|v: &Value| v.as_str())
+                            .unwrap_or("");
 
                         // 查找并执行工具
                         let result = self.execute_tool(name, arguments).await?;
@@ -122,7 +130,7 @@ impl Agent {
                     tool_call_id: None,
                 });
 
-                return Ok(ollama_response.content);
+                return Ok(());
             }
         }
     }

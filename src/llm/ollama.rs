@@ -1,9 +1,9 @@
 #![allow(unused)]
 use crate::agent::Message;
 use crate::error::Error;
-use crate::utils::load_image_as_base64;
 use crate::tools::ToolDefinition;
 use crate::ui::UI;
+use crate::utils::load_image_as_base64;
 use colored::Colorize;
 use futures_util::StreamExt;
 use serde_json::{json, Value};
@@ -82,7 +82,11 @@ impl Ollama {
         self.execute_impl(&payload).await
     }
 
-    pub async fn execute_with_messages(&self, model: &str, messages: &[Message]) -> Result<OllamaResponse, Error> {
+    pub async fn execute_with_messages(
+        &self,
+        model: &str,
+        messages: &[Message],
+    ) -> Result<OllamaResponse, Error> {
         let mut payload = json!({
             "model": model,
             "messages": messages,
@@ -98,7 +102,12 @@ impl Ollama {
         self.execute_impl(&payload).await
     }
 
-    pub async fn execute_with_image<I, E>(&self, model: &str, prompt: &str, images: I) -> Result<String, Error>
+    pub async fn execute_with_image<I, E>(
+        &self,
+        model: &str,
+        prompt: &str,
+        images: I,
+    ) -> Result<String, Error>
     where
         I: IntoIterator<Item = E>,
         E: AsRef<str>,
@@ -113,14 +122,15 @@ impl Ollama {
             }
         }
 
-        let response = self.execute_impl(&json!({
-            "model": model,
-            "prompt": prompt,
-            "images": image_list,
-            "stream": self.stream,
-            "think": self.think
-        }))
-        .await?;
+        let response = self
+            .execute_impl(&json!({
+                "model": model,
+                "prompt": prompt,
+                "images": image_list,
+                "stream": self.stream,
+                "think": self.think
+            }))
+            .await?;
 
         Ok(response.content)
     }
@@ -128,7 +138,10 @@ impl Ollama {
     async fn execute_impl(&self, payload: &serde_json::Value) -> Result<OllamaResponse, Error> {
         let client = reqwest::Client::new();
 
-        let url = self.url.as_deref().unwrap_or("http://localhost:11434/api/chat");
+        let url = self
+            .url
+            .as_deref()
+            .unwrap_or("http://localhost:11434/api/chat");
         let resp = client.post(url).json(payload).send().await?;
 
         let mut status = 0;
@@ -239,13 +252,19 @@ impl Ollama {
         spinner_running.store(false, Ordering::Relaxed);
 
         if self.verbose {
-            print!("\n");
+            if !response.is_empty() {
+                println!();
+            }
             drop(stdout().flush());
         }
 
         Ok(OllamaResponse {
             content: response,
-            tool_calls: if tool_calls_buffer.is_empty() { None } else { Some(tool_calls_buffer) },
+            tool_calls: if tool_calls_buffer.is_empty() {
+                None
+            } else {
+                Some(tool_calls_buffer)
+            },
         })
     }
 }
@@ -264,8 +283,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_ollama_with_image() {
-        let images = ["http://172.16.200.202:9000/api/view?filename=ComfyUI_00811_.png&subfolder=&type=output"];
-        let result = Ollama::new().execute_with_image("qwen3-vl:32b", "描述一下这张图片", &images).await;
+        let images = [
+            "http://172.16.200.202:9000/api/view?filename=ComfyUI_00811_.png&subfolder=&type=output",
+        ];
+        let result = Ollama::new()
+            .execute_with_image("qwen3-vl:32b", "描述一下这张图片", &images)
+            .await;
         assert!(result.is_ok());
     }
 }

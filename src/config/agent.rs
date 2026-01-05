@@ -2,11 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AgentConfig {
-    pub ollama: Option<OllamaConfig>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct OllamaConfig {
+    pub provider: Option<String>,
     pub base: Option<String>,
     pub model: Option<String>,
 }
@@ -14,10 +10,9 @@ pub struct OllamaConfig {
 impl Default for AgentConfig {
     fn default() -> Self {
         Self {
-            ollama: Some(OllamaConfig {
-                base: Some("http://127.0.0.1:11434".to_string()),
-                model: Some("qwen3".to_string()),
-            }),
+            provider: Some("ollama".to_string()),
+            base: Some("http://127.0.0.1:11434".to_string()),
+            model: Some("qwen3".to_string()),
         }
     }
 }
