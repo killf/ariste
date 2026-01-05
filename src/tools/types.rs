@@ -38,30 +38,39 @@ pub struct ToolResult {
 
 /// Enum representing all available tools
 pub enum Tool {
-    Calculator(CalculatorTool),
     Bash(BashTool),
     Read(ReadTool),
     Write(WriteTool),
+    Glob(GlobTool),
+    Grep(GrepTool),
+    Edit(EditTool),
+    WebFetch(WebFetchTool),
 }
 
 impl Tool {
     /// Get the tool definition
     pub fn definition(&self) -> ToolDefinition {
         match self {
-            Tool::Calculator(tool) => tool.definition(),
             Tool::Bash(tool) => tool.definition(),
             Tool::Read(tool) => tool.definition(),
             Tool::Write(tool) => tool.definition(),
+            Tool::Glob(tool) => tool.definition(),
+            Tool::Grep(tool) => tool.definition(),
+            Tool::Edit(tool) => tool.definition(),
+            Tool::WebFetch(tool) => tool.definition(),
         }
     }
 
     /// Execute the tool
     pub async fn execute(&self, arguments: &Value) -> Result<String, String> {
         match self {
-            Tool::Calculator(tool) => tool.execute(arguments).await,
             Tool::Bash(tool) => tool.execute(arguments).await,
             Tool::Read(tool) => tool.execute(arguments).await,
             Tool::Write(tool) => tool.execute(arguments).await,
+            Tool::Glob(tool) => tool.execute(arguments).await,
+            Tool::Grep(tool) => tool.execute(arguments).await,
+            Tool::Edit(tool) => tool.execute(arguments).await,
+            Tool::WebFetch(tool) => tool.execute(arguments).await,
         }
     }
 
@@ -81,7 +90,10 @@ pub trait ToolImpl: Send + Sync {
 }
 
 // Import the actual tool implementations
-pub use crate::tools::calculator::CalculatorTool;
 pub use crate::tools::bash::BashTool;
 pub use crate::tools::read::ReadTool;
 pub use crate::tools::write::WriteTool;
+pub use crate::tools::glob::GlobTool;
+pub use crate::tools::grep::GrepTool;
+pub use crate::tools::edit::EditTool;
+pub use crate::tools::web_fetch::WebFetchTool;

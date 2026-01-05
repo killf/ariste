@@ -2,22 +2,20 @@ use crate::agent::message::Message;
 use crate::config::AgentConfig;
 use crate::error::Error;
 use crate::llm::Ollama;
-use crate::tools::{BashTool, CalculatorTool, ReadTool, Tool, ToolDefinition, WriteTool};
+use crate::tools::{BashTool, EditTool, GlobTool, GrepTool, ReadTool, Tool, ToolDefinition, WebFetchTool, WriteTool};
 use crate::ui::UI;
 use serde_json::Value;
-use std::path::PathBuf;
 
 pub struct Agent {
     pub config: AgentConfig,
     pub ollama: Ollama,
-    pub workdir: PathBuf,
     pub messages: Vec<Message>,
     pub tools: Vec<Tool>,
     pub tool_definitions: Vec<ToolDefinition>,
 }
 
 impl Agent {
-    pub async fn load_from_config(workdir: PathBuf) -> Result<Self, Error> {
+    pub async fn load_from_config() -> Result<Self, Error> {
         let config_file = ".ariste/settings.json";
         let config = if !tokio::fs::try_exists(&config_file).await? {
             AgentConfig::default()
@@ -39,8 +37,16 @@ impl Agent {
         let read_def = read.definition();
         let write = Tool::Write(WriteTool);
         let write_def = write.definition();
-        let tools: Vec<Tool> = vec![bash, read, write];
-        let tool_definitions = vec![bash_def, read_def, write_def];
+        let glob = Tool::Glob(GlobTool);
+        let glob_def = glob.definition();
+        let grep = Tool::Grep(GrepTool);
+        let grep_def = grep.definition();
+        let edit = Tool::Edit(EditTool);
+        let edit_def = edit.definition();
+        let web_fetch = Tool::WebFetch(WebFetchTool);
+        let web_fetch_def = web_fetch.definition();
+        let tools: Vec<Tool> = vec![bash, read, write, glob, grep, edit, web_fetch];
+        let tool_definitions = vec![bash_def, read_def, write_def, glob_def, grep_def, edit_def, web_fetch_def];
 
         let tool_defs_for_ollama = tool_definitions.clone();
         let ollama = Ollama::new()
@@ -50,7 +56,6 @@ impl Agent {
 
         Ok(Self {
             config,
-            workdir,
             ollama,
             messages: Vec::new(),
             tools,

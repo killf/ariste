@@ -8,42 +8,33 @@ mod ui;
 mod utils;
 
 use agent::Agent;
+use clap::Parser;
 use cli::AgentHinter;
 use error::Error;
-use ui::UI;
-use clap::Parser;
 use rustyline::error::ReadlineError;
 use rustyline::history::DefaultHistory;
 use rustyline::Editor;
 use std::path::PathBuf;
+use ui::UI;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
-struct Args {
-    #[arg(short, long, default_value = ".")]
-    workdir: String,
-}
+struct Args {}
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let args = Args::parse();
-
     // 1. 指定工作目录
-    let workdir: PathBuf = args.workdir.into();
-    if !workdir.exists() {
-        tokio::fs::create_dir_all(&workdir).await?;
-    }
-
     let ariste_folder: PathBuf = ".ariste".into();
     if !ariste_folder.exists() {
         tokio::fs::create_dir_all(&ariste_folder).await?;
     }
 
     // 2. 创建Agent和UI
-    let mut agent = Agent::load_from_config(workdir.clone()).await?;
+    let mut agent = Agent::load_from_config().await?;
     let mut ui = UI::new();
 
     // 3. 显示欢迎信息
+    let workdir: PathBuf = std::env::current_dir()?;
     UI::welcome(&workdir);
 
     let mut rl: Editor<AgentHinter, DefaultHistory> = Editor::new()?;

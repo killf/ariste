@@ -18,6 +18,8 @@ bytes = "1.10"
 base64 = "0.22"
 clap = { version = "4.5.54", features = ["derive"] }
 serde = { version = "1.0.228", features = ["derive"] }
+glob = "0.3"
+regex = "1.11"
 
 [lints.rust]
 dead_code = "allow"
