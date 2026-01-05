@@ -4,6 +4,7 @@ mod config;
 mod error;
 mod image;
 mod ollama;
+mod tools;
 mod ui;
 
 use crate::agent::Agent;

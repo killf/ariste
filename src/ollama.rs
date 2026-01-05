@@ -2,14 +2,21 @@
 use crate::agent::Message;
 use crate::error::Error;
 use crate::image::load_image_as_base64;
+use crate::tools::ToolDefinition;
 use crate::ui::UI;
 use colored::Colorize;
 use futures_util::StreamExt;
-use serde_json::json;
+use serde_json::{json, Value};
 use std::io::{stdout, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::time::{sleep, Duration};
+
+#[derive(Debug, Clone)]
+pub struct OllamaResponse {
+    pub content: String,
+    pub tool_calls: Option<Vec<Value>>,
+}
 
 #[derive(Debug)]
 pub struct Ollama {
@@ -17,6 +24,7 @@ pub struct Ollama {
     pub stream: bool,
     pub verbose: bool,
     pub think: bool,
+    pub tools: Option<Vec<ToolDefinition>>,
 }
 
 impl Ollama {
@@ -26,6 +34,7 @@ impl Ollama {
             stream: true,
             verbose: true,
             think: true,
+            tools: None,
         }
     }
 
@@ -49,8 +58,13 @@ impl Ollama {
         self
     }
 
-    pub async fn execute(&self, model: &str, prompt: &str) -> Result<String, Error> {
-        self.execute_impl(&json!({
+    pub fn tools(mut self, tools: Vec<ToolDefinition>) -> Self {
+        self.tools = Some(tools);
+        self
+    }
+
+    pub async fn execute(&self, model: &str, prompt: &str) -> Result<OllamaResponse, Error> {
+        let mut payload = json!({
             "model": model,
             "messages": [{
                 "role": "user",
@@ -58,18 +72,30 @@ impl Ollama {
             }],
             "stream": self.stream,
             "think": self.think
-        }))
-        .await
+        });
+
+        // Add tools if available
+        if let Some(tools) = &self.tools {
+            payload["tools"] = serde_json::to_value(tools).unwrap();
+        }
+
+        self.execute_impl(&payload).await
     }
 
-    pub async fn execute_with_messages(&self, model: &str, messages: &[Message]) -> Result<String, Error> {
-        self.execute_impl(&json!({
+    pub async fn execute_with_messages(&self, model: &str, messages: &[Message]) -> Result<OllamaResponse, Error> {
+        let mut payload = json!({
             "model": model,
             "messages": messages,
             "stream": self.stream,
             "think": self.think
-        }))
-        .await
+        });
+
+        // Add tools if available
+        if let Some(tools) = &self.tools {
+            payload["tools"] = serde_json::to_value(tools).unwrap();
+        }
+
+        self.execute_impl(&payload).await
     }
 
     pub async fn execute_with_image<I, E>(&self, model: &str, prompt: &str, images: I) -> Result<String, Error>
@@ -87,17 +113,19 @@ impl Ollama {
             }
         }
 
-        self.execute_impl(&json!({
+        let response = self.execute_impl(&json!({
             "model": model,
             "prompt": prompt,
             "images": image_list,
             "stream": self.stream,
             "think": self.think
         }))
-        .await
+        .await?;
+
+        Ok(response.content)
     }
 
-    async fn execute_impl(&self, payload: &serde_json::Value) -> Result<String, Error> {
+    async fn execute_impl(&self, payload: &serde_json::Value) -> Result<OllamaResponse, Error> {
         let client = reqwest::Client::new();
 
         let url = self.url.as_deref().unwrap_or("http://localhost:11434/api/chat");
@@ -106,6 +134,7 @@ impl Ollama {
         let mut status = 0;
         let mut response = String::new();
         let mut thinking_buffer = String::new();
+        let mut tool_calls_buffer: Vec<Value> = Vec::new();
         let mut stream = resp.bytes_stream();
 
         // 启动 spinner
@@ -126,6 +155,17 @@ impl Ollama {
                 && let Ok(text) = std::str::from_utf8(&bytes)
                 && let Ok(resp) = serde_json::from_str::<serde_json::Value>(text)
             {
+                // Check for tool_calls
+                if let Some(message) = resp.get("message") {
+                    if let Some(tool_calls) = message.get("tool_calls") {
+                        if let Some(calls) = tool_calls.as_array() {
+                            for call in calls {
+                                tool_calls_buffer.push(call.clone());
+                            }
+                        }
+                    }
+                }
+
                 if let Some(done) = resp.get("done")
                     && let Some(done) = done.as_bool()
                     && done
@@ -203,7 +243,10 @@ impl Ollama {
             drop(stdout().flush());
         }
 
-        Ok(response)
+        Ok(OllamaResponse {
+            content: response,
+            tool_calls: if tool_calls_buffer.is_empty() { None } else { Some(tool_calls_buffer) },
+        })
     }
 }
 
@@ -216,6 +259,8 @@ mod tests {
     async fn test_ollama() {
         let result = Ollama::new().execute("qwen3-vl:32b", "1+2=").await;
         assert!(result.is_ok());
+        // The response should contain content
+        assert!(!result.unwrap().content.is_empty());
     }
 
     #[tokio::test]
