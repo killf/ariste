@@ -17,32 +17,7 @@ const STATUS_MESSAGES: &[&str] = &[
 // 思考块的装饰字符
 const THINKING_BORDER: &str = "│";
 const THINKING_CORNER_TL: &str = "┌";
-const THINKING_CORNER_TR: &str = "┐";
 const THINKING_CORNER_BL: &str = "└";
-const THINKING_CORNER_BR: &str = "┘";
-
-// 计算字符串的显示宽度（去除ANSI颜色代码）
-fn display_width(s: &str) -> usize {
-    let mut width = 0;
-    let mut chars = s.chars().peekable();
-
-    while let Some(c) = chars.next() {
-        if c == '\x1b' {
-            // 跳过ANSI转义序列
-            if chars.next() == Some('[') {
-                while let Some(&c) = chars.peek() {
-                    chars.next();
-                    if c.is_ascii_alphabetic() {
-                        break;
-                    }
-                }
-            }
-        } else {
-            width += 1;
-        }
-    }
-    width
-}
 
 pub struct UI {
     spinner_index: usize,
@@ -281,11 +256,6 @@ impl UI {
     pub fn clear() {
         print!("\x1b[2J\x1b[H");
         stdout().flush().ok();
-    }
-
-    /// 打印分隔线
-    pub fn separator() {
-        println!("{}", "─".repeat(60).dimmed());
     }
 
     /// 显示退出信息

@@ -11,6 +11,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// Execution status of a subagent task
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub enum SubAgentStatus {
     Pending,
     Running,
@@ -20,6 +21,7 @@ pub enum SubAgentStatus {
 
 /// Execution tracking for subagent tasks
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct SubAgentExecution {
     pub id: usize,
     pub task: SubAgentTask,
@@ -29,6 +31,7 @@ pub struct SubAgentExecution {
     pub result: Option<String>,
 }
 
+#[allow(dead_code)]
 impl SubAgentExecution {
     pub fn new(id: usize, task: SubAgentTask) -> Self {
         Self {
@@ -68,8 +71,10 @@ impl SubAgentExecution {
 
 /// Global counter for subagent IDs
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct SubAgentIdCounter(Arc<AtomicUsize>);
 
+#[allow(dead_code)]
 impl SubAgentIdCounter {
     pub fn new() -> Self {
         Self(Arc::new(AtomicUsize::new(0)))
@@ -88,6 +93,7 @@ impl Default for SubAgentIdCounter {
 
 /// Configuration for a subagent task
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct SubAgentTask {
     pub subagent_type: SubAgentType,
     pub description: String,
@@ -96,6 +102,7 @@ pub struct SubAgentTask {
     pub include_tools: bool,
 }
 
+#[allow(dead_code)]
 impl SubAgentTask {
     pub fn new(
         subagent_type: SubAgentType,
@@ -192,6 +199,7 @@ pub struct Agent {
     pub ollama: Ollama,
     pub messages: Vec<Message>,
     pub tools: Vec<Tool>,
+    #[allow(dead_code)]
     pub tool_definitions: Vec<ToolDefinition>,
 }
 
@@ -268,7 +276,7 @@ impl Agent {
             }
 
             // 使用完整的消息历史调用 Ollama
-            let model = self.config.model.as_deref().unwrap_or("qwen3-vl:32b");
+            let model = self.config.model.as_deref().unwrap_or("qwen3");
             let ollama_response = self
                 .ollama
                 .execute_with_messages(model, &self.messages)
@@ -355,7 +363,7 @@ impl Agent {
             }
 
             // Call LLM
-            let model = self.config.model.as_deref().unwrap_or("qwen3-vl:32b");
+            let model = self.config.model.as_deref().unwrap_or("qwen3");
             let ollama_response = self
                 .ollama
                 .execute_with_messages(model, &self.messages)
@@ -534,7 +542,7 @@ impl Agent {
             let output = json!({
                 "task": description,
                 "agent_type": subagent_type.description(),
-                "model": subagent.config.model.as_deref().unwrap_or("qwen3-vl:32b"),
+                "model": subagent.config.model.as_deref().unwrap_or("qwen3"),
                 "duration_ms": elapsed.as_millis(),
                 "used_tools": include_tools && subagent_type.uses_tools(),
                 "result": result_content,
@@ -587,6 +595,7 @@ impl Agent {
     }
 
     /// Spawn a subagent to handle a specialized task
+    #[allow(dead_code)]
     pub async fn spawn_task(
         &mut self,
         subagent_type: SubAgentType,
@@ -597,6 +606,7 @@ impl Agent {
     }
 
     /// Spawn a subagent with additional options
+    #[allow(dead_code)]
     pub async fn spawn_task_with_options(
         &mut self,
         subagent_type: SubAgentType,
@@ -670,7 +680,7 @@ impl Agent {
         let output = json!({
             "task": description,
             "agent_type": subagent_type.description(),
-            "model": subagent.config.model.as_deref().unwrap_or("qwen3-vl:32b"),
+            "model": subagent.config.model.as_deref().unwrap_or("qwen3"),
             "duration_ms": elapsed.as_millis(),
             "used_tools": include_tools && subagent_type.uses_tools(),
             "result": result_content,
@@ -687,6 +697,7 @@ impl Agent {
     }
 
     /// Spawn multiple subagent tasks concurrently
+    #[allow(dead_code)]
     pub async fn spawn_multiple_tasks(&mut self, tasks: Vec<SubAgentTask>) -> Result<Vec<String>, Error> {
         use futures_util::future::join_all;
 

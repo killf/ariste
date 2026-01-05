@@ -20,10 +20,4 @@ pub enum Error {
 
     #[error("{0}")]
     Message(String),
-
-    #[error("{0}")]
-    MessageRef(&'static str),
-
-    #[error("unknown error")]
-    Unknown,
 }

@@ -22,20 +22,6 @@ pub struct ParametersSchema {
     pub required: Vec<String>,
 }
 
-/// Tool call request from the AI model
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ToolCall {
-    pub name: String,
-    pub arguments: Value,
-}
-
-/// Result of a tool execution
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ToolResult {
-    pub name: String,
-    pub result: String,
-}
-
 /// Enum representing all available tools
 pub enum Tool {
     Bash(BashTool),
@@ -78,11 +64,6 @@ impl Tool {
             Tool::TodoWrite(tool) => tool.execute(arguments).await,
             Tool::Task(tool) => tool.execute(arguments).await,
         }
-    }
-
-    /// Get the tool name
-    pub fn name(&self) -> String {
-        self.definition().function.name
     }
 }
 

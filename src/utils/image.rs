@@ -17,12 +17,6 @@ pub async fn load_image_as_base64(image_url: &str) -> Result<String, Error> {
     Ok(base64.encode(buf))
 }
 
-pub async fn download_image(image_url: &str, target_file: &str) -> Result<(), Error> {
-    let buf = load_image(image_url).await?;
-    tokio::fs::write(target_file, buf).await?;
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

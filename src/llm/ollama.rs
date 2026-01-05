@@ -6,11 +6,11 @@ use crate::ui::UI;
 use crate::utils::load_image_as_base64;
 use colored::Colorize;
 use futures_util::StreamExt;
-use serde_json::{json, Value};
-use std::io::{stdout, Write};
-use std::sync::atomic::{AtomicBool, Ordering};
+use serde_json::{Value, json};
+use std::io::{Write, stdout};
 use std::sync::Arc;
-use tokio::time::{sleep, Duration};
+use std::sync::atomic::{AtomicBool, Ordering};
+use tokio::time::{Duration, sleep};
 
 #[derive(Debug, Clone)]
 pub struct OllamaResponse {
@@ -227,6 +227,7 @@ impl Ollama {
                                 sleep(Duration::from_millis(50)).await;
                                 UI::clear_line();
                                 UI::response_start();
+                                status = 2;
                             } else if status == 1 {
                                 // 完成思考块
                                 if !thinking_buffer.is_empty() {
@@ -275,7 +276,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_ollama() {
-        let result = Ollama::new().execute("qwen3-vl:32b", "1+2=").await;
+        let result = Ollama::new().execute("qwen3", "1+2=").await;
         assert!(result.is_ok());
         // The response should contain content
         assert!(!result.unwrap().content.is_empty());
@@ -287,7 +288,7 @@ mod tests {
             "http://172.16.200.202:9000/api/view?filename=ComfyUI_00811_.png&subfolder=&type=output",
         ];
         let result = Ollama::new()
-            .execute_with_image("qwen3-vl:32b", "描述一下这张图片", &images)
+            .execute_with_image("qwen3", "描述一下这张图片", &images)
             .await;
         assert!(result.is_ok());
     }
