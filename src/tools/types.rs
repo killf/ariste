@@ -46,7 +46,6 @@ pub enum Tool {
     Edit(EditTool),
     WebFetch(WebFetchTool),
     TodoWrite(TodoWriteTool),
-    Task(TaskTool),
 }
 
 impl Tool {
@@ -61,7 +60,6 @@ impl Tool {
             Tool::Edit(tool) => tool.definition(),
             Tool::WebFetch(tool) => tool.definition(),
             Tool::TodoWrite(tool) => tool.definition(),
-            Tool::Task(tool) => tool.definition(),
         }
     }
 
@@ -76,7 +74,6 @@ impl Tool {
             Tool::Edit(tool) => tool.execute(arguments).await,
             Tool::WebFetch(tool) => tool.execute(arguments).await,
             Tool::TodoWrite(tool) => tool.execute(arguments).await,
-            Tool::Task(tool) => tool.execute(arguments).await,
         }
     }
 
@@ -104,4 +101,3 @@ pub use crate::tools::grep::GrepTool;
 pub use crate::tools::edit::EditTool;
 pub use crate::tools::web_fetch::WebFetchTool;
 pub use crate::tools::todo_write::TodoWriteTool;
-pub use crate::tools::task::TaskTool;

@@ -2,9 +2,47 @@ use crate::agent::message::Message;
 use crate::config::AgentConfig;
 use crate::error::Error;
 use crate::llm::Ollama;
-use crate::tools::{BashTool, EditTool, GlobTool, GrepTool, ReadTool, TaskTool, TodoWriteTool, Tool, ToolDefinition, WebFetchTool, WriteTool};
+use crate::tools::{BashTool, EditTool, GlobTool, GrepTool, ReadTool, TodoWriteTool, Tool, ToolDefinition, WebFetchTool, WriteTool};
 use crate::ui::UI;
 use serde_json::Value;
+
+/// Types of subagents that can be spawned
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SubAgentType {
+    /// General-purpose agent for complex tasks
+    GeneralPurpose,
+    /// Fast agent for exploring codebases
+    Explore,
+    /// Software architect agent for designing implementation plans
+    Plan,
+}
+
+impl SubAgentType {
+    fn description(&self) -> &str {
+        match self {
+            SubAgentType::GeneralPurpose => "General-purpose agent for complex tasks",
+            SubAgentType::Explore => "Fast agent for exploring codebases",
+            SubAgentType::Plan => "Software architect agent for designing implementation plans",
+        }
+    }
+
+    fn system_prompt(&self) -> Option<&'static str> {
+        match self {
+            SubAgentType::Explore => Some(
+                "You are a codebase exploration agent. Your goal is to quickly find files, \
+                 search code, and answer questions about the codebase structure. \
+                 Be thorough but efficient in your exploration.",
+            ),
+            SubAgentType::Plan => Some(
+                "You are a software architect agent. Your goal is to design implementation plans \
+                 by exploring the codebase and providing step-by-step plans. Focus on: \
+                 1) Understanding existing patterns, 2) Identifying critical files, \
+                 3) Considering architectural trade-offs.",
+            ),
+            SubAgentType::GeneralPurpose => None,
+        }
+    }
+}
 
 pub struct Agent {
     pub config: AgentConfig,
@@ -47,10 +85,8 @@ impl Agent {
         let web_fetch_def = web_fetch.definition();
         let todo_write = Tool::TodoWrite(TodoWriteTool);
         let todo_write_def = todo_write.definition();
-        let task = Tool::Task(TaskTool);
-        let task_def = task.definition();
-        let tools: Vec<Tool> = vec![bash, read, write, glob, grep, edit, web_fetch, todo_write, task];
-        let tool_definitions = vec![bash_def, read_def, write_def, glob_def, grep_def, edit_def, web_fetch_def, todo_write_def, task_def];
+        let tools: Vec<Tool> = vec![bash, read, write, glob, grep, edit, web_fetch, todo_write];
+        let tool_definitions = vec![bash_def, read_def, write_def, glob_def, grep_def, edit_def, web_fetch_def, todo_write_def];
 
         let tool_defs_for_ollama = tool_definitions.clone();
         let ollama = Ollama::new()
@@ -181,6 +217,66 @@ impl Agent {
 
     pub fn clear_history(&mut self) {
         self.messages.clear();
+    }
+
+    /// Spawn a subagent to handle a specialized task
+    pub async fn spawn_task(
+        &mut self,
+        subagent_type: SubAgentType,
+        description: &str,
+        prompt: &str,
+    ) -> Result<String, Error> {
+        // Build the messages
+        let mut messages = Vec::new();
+
+        // Add system prompt if applicable
+        if let Some(system_prompt) = subagent_type.system_prompt() {
+            messages.push(Message {
+                role: "system".to_string(),
+                content: system_prompt.to_string(),
+                tool_calls: None,
+                tool_call_id: None,
+            });
+        }
+
+        // Build the full prompt
+        let full_prompt = format!("Task: {}\n\nDetails:\n{}", description, prompt);
+
+        // Add user message
+        messages.push(Message {
+            role: "user".to_string(),
+            content: full_prompt,
+            tool_calls: None,
+            tool_call_id: None,
+        });
+
+        // Get model to use
+        let model = self
+            .config
+            .model
+            .as_deref()
+            .unwrap_or("qwen3-vl:32b");
+
+        // Create Ollama instance without tools (to avoid recursion)
+        let ollama = Ollama::new()
+            .stream(false)
+            .think(false);
+
+        // Execute the task
+        let response = ollama
+            .execute_with_messages(model, &messages)
+            .await?;
+
+        // Format output
+        let output = format!(
+            "=== Subagent Task: {} ===\nType: {}\nModel: {}\n\n{}\n\n=== Task Complete ===",
+            description,
+            subagent_type.description(),
+            model,
+            response.content
+        );
+
+        Ok(output)
     }
 
     pub async fn quit(&mut self) -> Result<(), Error> {
