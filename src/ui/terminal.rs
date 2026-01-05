@@ -67,16 +67,23 @@ impl UI {
             "{}",
             "  ╔════════════════════════════════════════╗".bright_yellow()
         );
-        println!("{}", "  ║".bright_yellow());
+        println!(
+            "{}",
+            "  ║                                        ║".bright_yellow()
+        );
         println!(
             "{}",
             format!(
-                "  {}  {}  ",
+                "  {}            {}             {}",
                 "║".bright_yellow(),
-                "Ariste AI Agent".bright_cyan().bold()
+                "Ariste AI Agent".bright_cyan().bold(),
+                "║".bright_yellow(),
             )
         );
-        println!("{}", "  ║".bright_yellow());
+        println!(
+            "{}",
+            "  ║                                        ║".bright_yellow()
+        );
         println!(
             "{}",
             "  ╚════════════════════════════════════════╝".bright_yellow()
@@ -164,12 +171,10 @@ impl UI {
     }
 
     /// 显示响应开始
-    pub fn response_start() {
-    }
+    pub fn response_start() {}
 
     /// 显示响应结束
-    pub fn response_end() {
-    }
+    pub fn response_end() {}
 
     /// 显示思考块开始 - Claude Code 风格
     pub fn thinking_block_start() {
@@ -221,11 +226,7 @@ impl UI {
                 );
             }
             _ => {
-                print!(
-                    "{} {}",
-                    "🔨".bright_magenta(),
-                    tool_name.bright_magenta()
-                );
+                print!("{} {}", "🔨".bright_magenta(), tool_name.bright_magenta());
             }
         }
         stdout().flush().ok();

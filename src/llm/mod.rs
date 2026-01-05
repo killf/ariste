@@ -1,3 +1,3 @@
 mod ollama;
 
-pub use ollama::Ollama;
+pub use ollama::{Ollama, OllamaResponse};

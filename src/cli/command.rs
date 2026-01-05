@@ -12,7 +12,10 @@ pub struct CommandHint {
 
 impl CommandHint {
     fn new(text: &'static str) -> Self {
-        Self { text, display: text.cyan().italic().to_string() }
+        Self {
+            text,
+            display: text.cyan().italic().to_string(),
+        }
     }
 
     fn suffix(&self, strip_chars: usize) -> Self {
@@ -37,12 +40,9 @@ pub struct AgentHinter {
 impl AgentHinter {
     pub fn new() -> Self {
         let mut hints = HashSet::new();
-        hints.insert(CommandHint::new("/exit"));
         hints.insert(CommandHint::new("/quit"));
+        hints.insert(CommandHint::new("/clear"));
         hints.insert(CommandHint::new("/help"));
-        hints.insert(CommandHint::new("/fetch_goods_info"));
-        hints.insert(CommandHint::new("/show_goods_info"));
-
         AgentHinter { hints }
     }
 }
@@ -54,6 +54,15 @@ impl Hinter for AgentHinter {
             return None;
         }
 
-        self.hints.iter().filter_map(|hint| if hint.text.starts_with(line) { Some(hint.suffix(pos)) } else { None }).next()
+        self.hints
+            .iter()
+            .filter_map(|hint| {
+                if hint.text.starts_with(line) {
+                    Some(hint.suffix(pos))
+                } else {
+                    None
+                }
+            })
+            .next()
     }
 }
