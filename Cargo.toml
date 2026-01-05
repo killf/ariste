@@ -3,6 +3,14 @@ name = "ariste"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "ariste"
+path = "src/main.rs"
+
+[lib]
+name = "ariste"
+path = "src/lib.rs"
+
 [dependencies]
 tokio = { version = "1.48", features = ["full"] }
 reqwest = { version = "0.13", features = ["json", "stream"] }

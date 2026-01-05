@@ -1,5 +1,5 @@
 #[derive(thiserror::Error, Debug)]
-pub(crate) enum Error {
+pub enum Error {
     #[error("{0}")]
     Reqwest(#[from] reqwest::Error),
 

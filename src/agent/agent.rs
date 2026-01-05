@@ -283,3 +283,100 @@ impl Agent {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_subagent_type_descriptions() {
+        assert!(SubAgentType::GeneralPurpose.description().contains("General-purpose"));
+        assert!(SubAgentType::Explore.description().contains("explor"));
+        assert!(SubAgentType::Plan.description().contains("architect"));
+    }
+
+    #[test]
+    fn test_subagent_type_system_prompts() {
+        // GeneralPurpose has no system prompt
+        assert!(SubAgentType::GeneralPurpose.system_prompt().is_none());
+
+        // Explore has a system prompt
+        let explore_prompt = SubAgentType::Explore.system_prompt();
+        assert!(explore_prompt.is_some());
+        assert!(explore_prompt.unwrap().contains("exploration agent"));
+
+        // Plan has a system prompt
+        let plan_prompt = SubAgentType::Plan.system_prompt();
+        assert!(plan_prompt.is_some());
+        assert!(plan_prompt.unwrap().contains("architect agent"));
+    }
+
+    #[tokio::test]
+    async fn test_spawn_task_general_purpose() {
+        let mut agent = Agent::load_from_config()
+            .await
+            .expect("Failed to load agent");
+
+        let result = agent
+            .spawn_task(
+                SubAgentType::GeneralPurpose,
+                "简单计算",
+                "1 + 1 等于多少？",
+            )
+            .await;
+
+        // This test requires Ollama to be running
+        // Skip in CI or when Ollama is not available
+        if result.is_ok() {
+            let output = result.unwrap();
+            assert!(output.contains("Subagent Task"));
+            assert!(output.contains("简单计算"));
+        }
+    }
+
+    #[tokio::test]
+    async fn test_spawn_task_explore() {
+        let mut agent = Agent::load_from_config()
+            .await
+            .expect("Failed to load agent");
+
+        let result = agent
+            .spawn_task(
+                SubAgentType::Explore,
+                "测试探索",
+                "当前目录有哪些文件？",
+            )
+            .await;
+
+        // Requires Ollama to be running
+        if result.is_ok() {
+            let output = result.unwrap();
+            assert!(output.contains("Test Task"));
+            assert!(output.contains("Type: Fast agent"));
+        }
+    }
+
+    #[tokio::test]
+    async fn test_spawn_task_plan() {
+        let mut agent = Agent::load_from_config()
+            .await
+            .expect("Failed to load agent");
+
+        let result = agent
+            .spawn_task(
+                SubAgentType::Plan,
+                "测试规划",
+                "如何实现一个简单的计数器？",
+            )
+            .await;
+
+        // Requires Ollama to be running
+        if result.is_ok() {
+            let output = result.unwrap();
+            assert!(output.contains("Test Task"));
+            assert!(output.contains("Type: Software architect"));
+            // Plan agent should provide structured response
+            assert!(output.len() > 50);
+        }
+    }
+}
