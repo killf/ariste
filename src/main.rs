@@ -63,6 +63,7 @@ async fn main() -> Result<(), Error> {
                 // 处理命令
                 match line {
                     "/q" | "/quit" | "/exit" => {
+                        UI::clear_previous_line();
                         agent.quit().await?;
                         UI::goodbye();
                         break;
@@ -96,6 +97,7 @@ async fn main() -> Result<(), Error> {
                 continue;
             }
             Err(ReadlineError::Eof) => {
+                UI::clear_previous_line();
                 agent.quit().await?;
                 UI::goodbye();
                 break;

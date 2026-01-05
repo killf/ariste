@@ -165,7 +165,13 @@ impl UI {
 
     /// 清除当前行
     pub fn clear_line() {
-        print!("\r\x1b[K");
+        print!("\r\x1b[2K\r");
+        stdout().flush().ok();
+    }
+
+    /// 清除上一行（用于退出时清除 prompt）
+    pub fn clear_previous_line() {
+        print!("\r\x1b[1A\x1b[2K\r");
         stdout().flush().ok();
     }
 
