@@ -40,6 +40,8 @@ pub struct ToolResult {
 pub enum Tool {
     Calculator(CalculatorTool),
     Bash(BashTool),
+    Read(ReadTool),
+    Write(WriteTool),
 }
 
 impl Tool {
@@ -48,6 +50,8 @@ impl Tool {
         match self {
             Tool::Calculator(tool) => tool.definition(),
             Tool::Bash(tool) => tool.definition(),
+            Tool::Read(tool) => tool.definition(),
+            Tool::Write(tool) => tool.definition(),
         }
     }
 
@@ -56,6 +60,8 @@ impl Tool {
         match self {
             Tool::Calculator(tool) => tool.execute(arguments).await,
             Tool::Bash(tool) => tool.execute(arguments).await,
+            Tool::Read(tool) => tool.execute(arguments).await,
+            Tool::Write(tool) => tool.execute(arguments).await,
         }
     }
 
@@ -77,3 +83,5 @@ pub trait ToolImpl: Send + Sync {
 // Import the actual tool implementations
 pub use crate::tools::calculator::CalculatorTool;
 pub use crate::tools::bash::BashTool;
+pub use crate::tools::read::ReadTool;
+pub use crate::tools::write::WriteTool;

@@ -2,7 +2,7 @@ use crate::agent::message::Message;
 use crate::config::AgentConfig;
 use crate::error::Error;
 use crate::llm::Ollama;
-use crate::tools::{BashTool, CalculatorTool, Tool, ToolDefinition};
+use crate::tools::{BashTool, CalculatorTool, ReadTool, Tool, ToolDefinition, WriteTool};
 use crate::ui::UI;
 use serde_json::Value;
 use std::path::PathBuf;
@@ -12,8 +12,8 @@ pub struct Agent {
     pub ollama: Ollama,
     pub workdir: PathBuf,
     pub messages: Vec<Message>,
-    tools: Vec<Tool>,
-    tool_definitions: Vec<ToolDefinition>,
+    pub tools: Vec<Tool>,
+    pub tool_definitions: Vec<ToolDefinition>,
 }
 
 impl Agent {
@@ -33,12 +33,14 @@ impl Agent {
         };
 
         // Register tools
-        let calculator = Tool::Calculator(CalculatorTool);
-        let calculator_def = calculator.definition();
         let bash = Tool::Bash(BashTool);
         let bash_def = bash.definition();
-        let tools: Vec<Tool> = vec![calculator, bash];
-        let tool_definitions = vec![calculator_def, bash_def];
+        let read = Tool::Read(ReadTool);
+        let read_def = read.definition();
+        let write = Tool::Write(WriteTool);
+        let write_def = write.definition();
+        let tools: Vec<Tool> = vec![bash, read, write];
+        let tool_definitions = vec![bash_def, read_def, write_def];
 
         let tool_defs_for_ollama = tool_definitions.clone();
         let ollama = Ollama::new()
