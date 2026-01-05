@@ -73,8 +73,10 @@ async fn main() -> Result<(), Error> {
                         continue;
                     }
                     "/clear" => {
+                        agent.clear_history();
                         UI::clear();
                         UI::welcome(&workdir);
+                        UI::info("Conversation history cleared");
                         continue;
                     }
                     cmd if cmd.starts_with('/') => {

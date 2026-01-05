@@ -1,4 +1,5 @@
 #![allow(unused)]
+use crate::agent::Message;
 use crate::error::Error;
 use crate::image::load_image_as_base64;
 use crate::ui::UI;
@@ -55,6 +56,16 @@ impl Ollama {
                 "role": "user",
                 "content": prompt
             }],
+            "stream": self.stream,
+            "think": self.think
+        }))
+        .await
+    }
+
+    pub async fn execute_with_messages(&self, model: &str, messages: &[Message]) -> Result<String, Error> {
+        self.execute_impl(&json!({
+            "model": model,
+            "messages": messages,
             "stream": self.stream,
             "think": self.think
         }))
