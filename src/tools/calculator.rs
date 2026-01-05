@@ -1,13 +1,12 @@
-use crate::tools::types::Tool;
+use crate::tools::types::ToolImpl;
+use crate::tools::types::{ToolDefinition, FunctionDefinition, ParametersSchema};
 use serde_json::Value;
 
 /// Simple calculator tool for basic mathematical operations
 pub struct CalculatorTool;
 
-impl Tool for CalculatorTool {
-    fn definition(&self) -> crate::tools::types::ToolDefinition {
-        use crate::tools::types::{ToolDefinition, FunctionDefinition, ParametersSchema};
-
+impl ToolImpl for CalculatorTool {
+    fn definition(&self) -> ToolDefinition {
         let mut properties = serde_json::Map::new();
         properties.insert(
             "expression".to_string(),
@@ -31,7 +30,7 @@ impl Tool for CalculatorTool {
         }
     }
 
-    fn execute(&self, arguments: &Value) -> Result<String, String> {
+    async fn execute(&self, arguments: &Value) -> Result<String, String> {
         let expression = arguments
             .get("expression")
             .and_then(|v| v.as_str())
@@ -180,38 +179,38 @@ fn parse_expression(tokens: &[Token]) -> Result<f64, String> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_calculator_addition() {
+    #[tokio::test]
+    async fn test_calculator_addition() {
         let tool = CalculatorTool;
         let args = serde_json::json!({"expression": "2 + 3"});
-        assert_eq!(tool.execute(&args), Ok("5".to_string()));
+        assert_eq!(tool.execute(&args).await, Ok("5".to_string()));
     }
 
-    #[test]
-    fn test_calculator_multiplication() {
+    #[tokio::test]
+    async fn test_calculator_multiplication() {
         let tool = CalculatorTool;
         let args = serde_json::json!({"expression": "10 * 5"});
-        assert_eq!(tool.execute(&args), Ok("50".to_string()));
+        assert_eq!(tool.execute(&args).await, Ok("50".to_string()));
     }
 
-    #[test]
-    fn test_calculator_division() {
+    #[tokio::test]
+    async fn test_calculator_division() {
         let tool = CalculatorTool;
         let args = serde_json::json!({"expression": "100 / 4"});
-        assert_eq!(tool.execute(&args), Ok("25".to_string()));
+        assert_eq!(tool.execute(&args).await, Ok("25".to_string()));
     }
 
-    #[test]
-    fn test_calculator_complex() {
+    #[tokio::test]
+    async fn test_calculator_complex() {
         let tool = CalculatorTool;
         let args = serde_json::json!({"expression": "10 * 5 + 3"});
-        assert_eq!(tool.execute(&args), Ok("53".to_string()));
+        assert_eq!(tool.execute(&args).await, Ok("53".to_string()));
     }
 
-    #[test]
-    fn test_calculator_division_by_zero() {
+    #[tokio::test]
+    async fn test_calculator_division_by_zero() {
         let tool = CalculatorTool;
         let args = serde_json::json!({"expression": "10 / 0"});
-        assert!(tool.execute(&args).is_err());
+        assert!(tool.execute(&args).await.is_err());
     }
 }

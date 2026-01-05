@@ -198,7 +198,6 @@ impl UI {
 
     /// 显示工具调用开始 - Claude Code 风格
     pub fn tool_start(tool_name: &str, args: Option<&str>) {
-        println!();
         // 格式化参数，使其更紧凑
         let formatted_args = if let Some(args_str) = args {
             // 移除换行和多余空格，使 JSON 更紧凑

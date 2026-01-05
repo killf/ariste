@@ -36,11 +36,44 @@ pub struct ToolResult {
     pub result: String,
 }
 
+/// Enum representing all available tools
+pub enum Tool {
+    Calculator(CalculatorTool),
+    Bash(BashTool),
+}
+
+impl Tool {
+    /// Get the tool definition
+    pub fn definition(&self) -> ToolDefinition {
+        match self {
+            Tool::Calculator(tool) => tool.definition(),
+            Tool::Bash(tool) => tool.definition(),
+        }
+    }
+
+    /// Execute the tool
+    pub async fn execute(&self, arguments: &Value) -> Result<String, String> {
+        match self {
+            Tool::Calculator(tool) => tool.execute(arguments).await,
+            Tool::Bash(tool) => tool.execute(arguments).await,
+        }
+    }
+
+    /// Get the tool name
+    pub fn name(&self) -> String {
+        self.definition().function.name
+    }
+}
+
 /// Trait that all tools must implement
-pub trait Tool: Send + Sync {
+pub trait ToolImpl: Send + Sync {
     /// Returns the tool definition for the AI model
     fn definition(&self) -> ToolDefinition;
 
     /// Executes the tool with the given arguments
-    fn execute(&self, arguments: &Value) -> Result<String, String>;
+    async fn execute(&self, arguments: &Value) -> Result<String, String>;
 }
+
+// Import the actual tool implementations
+pub use crate::tools::calculator::CalculatorTool;
+pub use crate::tools::bash::BashTool;

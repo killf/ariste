@@ -2,7 +2,7 @@ use crate::agent::message::Message;
 use crate::config::AgentConfig;
 use crate::error::Error;
 use crate::llm::Ollama;
-use crate::tools::{CalculatorTool, Tool, ToolDefinition};
+use crate::tools::{BashTool, CalculatorTool, Tool, ToolDefinition};
 use crate::ui::UI;
 use serde_json::Value;
 use std::path::PathBuf;
@@ -12,7 +12,7 @@ pub struct Agent {
     pub ollama: Ollama,
     pub workdir: PathBuf,
     pub messages: Vec<Message>,
-    tools: Vec<Box<dyn Tool>>,
+    tools: Vec<Tool>,
     tool_definitions: Vec<ToolDefinition>,
 }
 
@@ -33,10 +33,12 @@ impl Agent {
         };
 
         // Register tools
-        let calculator = Box::new(CalculatorTool) as Box<dyn Tool>;
+        let calculator = Tool::Calculator(CalculatorTool);
         let calculator_def = calculator.definition();
-        let tools: Vec<Box<dyn Tool>> = vec![calculator];
-        let tool_definitions = vec![calculator_def];
+        let bash = Tool::Bash(BashTool);
+        let bash_def = bash.definition();
+        let tools: Vec<Tool> = vec![calculator, bash];
+        let tool_definitions = vec![calculator_def, bash_def];
 
         let tool_defs_for_ollama = tool_definitions.clone();
         let ollama = Ollama::new()
@@ -147,7 +149,7 @@ impl Agent {
                 UI::tool_start(name, args_str.as_deref());
 
                 // 执行工具
-                let result = match tool.execute(arguments) {
+                let result = match tool.execute(arguments).await {
                     Ok(result) => result,
                     Err(e) => {
                         // 显示工具执行错误
