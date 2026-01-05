@@ -1,7 +1,7 @@
 #![allow(unused)]
 use crate::agent::Message;
 use crate::error::Error;
-use crate::image::load_image_as_base64;
+use crate::utils::load_image_as_base64;
 use crate::tools::ToolDefinition;
 use crate::ui::UI;
 use colored::Colorize;
@@ -253,7 +253,6 @@ impl Ollama {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio;
 
     #[tokio::test]
     async fn test_ollama() {

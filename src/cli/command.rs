@@ -5,7 +5,7 @@ use rustyline_derive::{Completer, Helper, Highlighter, Validator};
 use std::collections::HashSet;
 
 #[derive(Hash, Debug, PartialEq, Eq)]
-pub(crate) struct CommandHint {
+pub struct CommandHint {
     text: &'static str,
     display: String,
 }
@@ -30,7 +30,7 @@ impl Hint for CommandHint {
 }
 
 #[derive(Completer, Helper, Validator, Highlighter)]
-pub(crate) struct AgentHinter {
+pub struct AgentHinter {
     hints: HashSet<CommandHint>,
 }
 

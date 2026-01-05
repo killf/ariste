@@ -1,16 +1,16 @@
 mod agent;
-mod command;
+mod cli;
 mod config;
 mod error;
-mod image;
-mod ollama;
+mod llm;
 mod tools;
 mod ui;
+mod utils;
 
-use crate::agent::Agent;
-use crate::command::AgentHinter;
-use crate::error::Error;
-use crate::ui::UI;
+use agent::Agent;
+use cli::AgentHinter;
+use error::Error;
+use ui::UI;
 use clap::Parser;
 use rustyline::error::ReadlineError;
 use rustyline::history::DefaultHistory;

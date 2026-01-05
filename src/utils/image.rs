@@ -26,7 +26,6 @@ pub async fn download_image(image_url: &str, target_file: &str) -> Result<(), Er
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio;
 
     #[tokio::test]
     async fn test_image() {
