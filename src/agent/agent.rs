@@ -2,7 +2,7 @@ use crate::agent::message::Message;
 use crate::config::AgentConfig;
 use crate::error::Error;
 use crate::llm::Ollama;
-use crate::tools::{BashTool, EditTool, GlobTool, GrepTool, ReadTool, Tool, ToolDefinition, WebFetchTool, WriteTool};
+use crate::tools::{BashTool, EditTool, GlobTool, GrepTool, ReadTool, TaskTool, TodoWriteTool, Tool, ToolDefinition, WebFetchTool, WriteTool};
 use crate::ui::UI;
 use serde_json::Value;
 
@@ -45,8 +45,12 @@ impl Agent {
         let edit_def = edit.definition();
         let web_fetch = Tool::WebFetch(WebFetchTool);
         let web_fetch_def = web_fetch.definition();
-        let tools: Vec<Tool> = vec![bash, read, write, glob, grep, edit, web_fetch];
-        let tool_definitions = vec![bash_def, read_def, write_def, glob_def, grep_def, edit_def, web_fetch_def];
+        let todo_write = Tool::TodoWrite(TodoWriteTool);
+        let todo_write_def = todo_write.definition();
+        let task = Tool::Task(TaskTool);
+        let task_def = task.definition();
+        let tools: Vec<Tool> = vec![bash, read, write, glob, grep, edit, web_fetch, todo_write, task];
+        let tool_definitions = vec![bash_def, read_def, write_def, glob_def, grep_def, edit_def, web_fetch_def, todo_write_def, task_def];
 
         let tool_defs_for_ollama = tool_definitions.clone();
         let ollama = Ollama::new()
