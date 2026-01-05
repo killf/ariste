@@ -4,10 +4,12 @@ mod config;
 mod error;
 mod image;
 mod ollama;
+mod ui;
 
 use crate::agent::Agent;
 use crate::command::AgentHinter;
 use crate::error::Error;
+use crate::ui::UI;
 use clap::Parser;
 use rustyline::error::ReadlineError;
 use rustyline::history::DefaultHistory;
@@ -36,9 +38,12 @@ async fn main() -> Result<(), Error> {
         tokio::fs::create_dir_all(&ariste_folder).await?;
     }
 
-    // 2. 创建Agent
+    // 2. 创建Agent和UI
     let mut agent = Agent::load_from_config(workdir.clone()).await?;
-    println!("工作目录: {}", agent.workdir.display());
+    let mut ui = UI::new();
+
+    // 3. 显示欢迎信息
+    UI::welcome(&workdir);
 
     let mut rl: Editor<AgentHinter, DefaultHistory> = Editor::new()?;
     let history_file = ariste_folder.join("history.txt");
@@ -47,40 +52,62 @@ async fn main() -> Result<(), Error> {
     }
     rl.set_helper(Some(AgentHinter::new()));
 
-    // 3. 聊天对话
+    // 4. 聊天对话
     loop {
-        match rl.readline("> ") {
+        let prompt = UI::prompt();
+        match rl.readline(&prompt) {
             Ok(line) => {
                 let line = line.trim();
                 rl.add_history_entry(line)?;
 
-                if line == "/q" || line == "/quit" || line == "/exit" {
-                    agent.quit().await?;
-                    break;
-                } else if line.starts_with("/") {
-                    continue;
-                }
-
-                if let Err(e) = agent.invoke(line).await {
-                    println!("{}", e);
+                // 处理命令
+                match line {
+                    "/q" | "/quit" | "/exit" => {
+                        agent.quit().await?;
+                        UI::goodbye();
+                        break;
+                    }
+                    "/help" => {
+                        UI::welcome(&workdir);
+                        continue;
+                    }
+                    "/clear" => {
+                        UI::clear();
+                        UI::welcome(&workdir);
+                        continue;
+                    }
+                    cmd if cmd.starts_with('/') => {
+                        UI::warning(&format!("Unknown command: {}", cmd));
+                        UI::info("Type /help to see available commands");
+                        continue;
+                    }
+                    _ => {
+                        // 执行 AI 调用
+                        ui.reset_spinner();
+                        if let Err(e) = agent.invoke(line).await {
+                            UI::error(&e.to_string());
+                        }
+                        UI::response_end();
+                    }
                 }
             }
             Err(ReadlineError::Interrupted) => {
-                agent.quit().await?;
-                break;
+                UI::info("Use /quit to exit the program");
+                continue;
             }
             Err(ReadlineError::Eof) => {
                 agent.quit().await?;
+                UI::goodbye();
                 break;
             }
             Err(err) => {
-                println!("Error: {:?}", err);
+                UI::error(&format!("Error: {:?}", err));
                 continue;
             }
         }
     }
 
-    // 4. 保存历史信息
+    // 5. 保存历史信息
     rl.save_history(&history_file)?;
 
     Ok(())

@@ -1,10 +1,15 @@
 #![allow(unused)]
 use crate::error::Error;
 use crate::image::load_image_as_base64;
+use crate::ui::UI;
 use colored::Colorize;
 use futures_util::StreamExt;
 use serde_json::json;
 use std::io::{stdout, Write};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
 
 #[derive(Debug)]
 pub struct Ollama {
@@ -90,7 +95,21 @@ impl Ollama {
 
         let mut status = 0;
         let mut response = String::new();
+        let mut thinking_buffer = String::new();
         let mut stream = resp.bytes_stream();
+
+        // 启动 spinner
+        let spinner_running = Arc::new(AtomicBool::new(true));
+        let spinner_running_clone = spinner_running.clone();
+
+        // 在后台线程中运行 spinner
+        thread::spawn(move || {
+            let mut ui = UI::new();
+            while spinner_running_clone.load(Ordering::Relaxed) {
+                ui.thinking_start();
+                thread::sleep(Duration::from_millis(150));
+            }
+        });
 
         while let Some(chunk) = stream.next().await {
             if let Ok(bytes) = chunk
@@ -110,12 +129,26 @@ impl Ollama {
                     {
                         if self.verbose {
                             if status == 0 {
-                                println!("{}", "<thinking>".cyan());
+                                // 停止 spinner 并清除行
+                                spinner_running.store(false, Ordering::Relaxed);
+                                thread::sleep(Duration::from_millis(50));
+                                UI::clear_line();
+
+                                // 显示思考块开始
+                                UI::thinking_block_start();
                                 status = 1;
                             }
 
-                            print!("{}", fragment.cyan());
-                            drop(stdout().flush());
+                            // 累积思考内容
+                            thinking_buffer.push_str(fragment);
+
+                            // 处理buffer中的所有完整行
+                            while let Some(newline_pos) = thinking_buffer.find('\n') {
+                                let line = &thinking_buffer[..newline_pos];
+                                UI::thinking_block_content(line);
+                                // 移除已处理的行（包括换行符）
+                                thinking_buffer = thinking_buffer[newline_pos + 1..].to_string();
+                            }
                         }
 
                         continue;
@@ -125,8 +158,19 @@ impl Ollama {
                         && let Some(fragment) = fragment.as_str()
                     {
                         if self.verbose {
-                            if status == 1 {
-                                println!("{}", "\n</thinking>".cyan());
+                            if status == 0 {
+                                // 还没有看到 thinking，直接停止 spinner
+                                spinner_running.store(false, Ordering::Relaxed);
+                                thread::sleep(Duration::from_millis(50));
+                                UI::clear_line();
+                                UI::response_start();
+                            } else if status == 1 {
+                                // 完成思考块
+                                if !thinking_buffer.is_empty() {
+                                    UI::thinking_block_content(&thinking_buffer);
+                                    thinking_buffer.clear();
+                                }
+                                UI::thinking_block_end();
                                 status = 2;
                             }
 
@@ -140,6 +184,9 @@ impl Ollama {
                 }
             }
         }
+
+        // 停止 spinner
+        spinner_running.store(false, Ordering::Relaxed);
 
         if self.verbose {
             print!("\n");
